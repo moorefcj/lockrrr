@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http; // 1. Import the package
+import 'dart:convert';
 
 void main() => runApp(const DeliveryBoxApp());
 
@@ -145,6 +147,44 @@ class LockScreen extends StatefulWidget {
 
 class _LockScreenState extends State<LockScreen> {
   bool locked = true;
+  bool isLoading = false; // Add a loading state to prevent double-clicks
+
+  // 2. Create the API function
+  Future<void> toggleLock(bool newValue) async {
+    setState(() => isLoading = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://lockrrr.site/api/events'), // Replace with your full URL
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ayeyoulockingthatbadboyup67', // Using your API key
+        },
+        body: jsonEncode({
+          'locked': newValue,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Only update UI if the server confirms the change
+        setState(() {
+          locked = newValue;
+        });
+      } else {
+        // Handle server errors
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to update lock status")),
+        );
+      }
+    } catch (e) {
+      // Handle network errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,22 +199,22 @@ class _LockScreenState extends State<LockScreen> {
               Icon(
                 locked ? Icons.lock : Icons.lock_open,
                 size: 70,
-                color: Colors.green,
+                color: locked ? Colors.green : Colors.red,
               ),
               const SizedBox(height: 12),
               Text(
                 locked ? "Locked" : "Unlocked",
-                style: const TextStyle(
-                    fontSize: 28, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    setState(() => locked = !locked);
-                  },
-                  child: Text(locked ? "Unlock" : "Lock"),
+                  // 3. Trigger the API call
+                  onPressed: isLoading ? null : () => toggleLock(!locked),
+                  child: isLoading 
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(locked ? "Unlock" : "Lock"),
                 ),
               )
             ],
