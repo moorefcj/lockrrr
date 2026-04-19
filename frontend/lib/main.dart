@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http; // 1. Import the package
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
 
-void main() => runApp(const DeliveryBoxApp());
+bool locked = false; // your state variable
+
+
+void main() async {
+  runApp(const DeliveryBoxApp());
+}
 
 class DeliveryBoxApp extends StatelessWidget {
   const DeliveryBoxApp({super.key});
@@ -20,6 +28,8 @@ class DeliveryBoxApp extends StatelessWidget {
     );
   }
 }
+
+
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -56,8 +66,32 @@ class _AppShellState extends State<AppShell> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {},
-          )
+            onPressed: () async {
+                  final newValue = !locked; // toggle or set however you want
+
+                  try {
+                    final response = await http.post(
+                      Uri.parse('https://lockrrr.site/api/unlock'),
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ayeyoulockingthatbadboyup67',
+                      },
+                      body: jsonEncode({
+                        'locked': newValue,
+                      }),
+                    );
+
+                    if (response.statusCode == 200) {
+                      // update UI state if successful
+                      locked = newValue;
+                      debugPrint('Lock state updated: $locked');
+                    } else {
+                      debugPrint('Failed: ${response.statusCode}');
+                    }
+                  } catch (e) {
+                    debugPrint('Error: $e');
+                  }
+                })
         ],
       ),
       drawer: Drawer(
@@ -155,7 +189,7 @@ class _LockScreenState extends State<LockScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('https://lockrrr.site/api/events'), // Replace with your full URL
+        Uri.parse('http://161.35.136.17:3000/api/unlock'), // Replace with your full URL
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ayeyoulockingthatbadboyup67', // Using your API key
