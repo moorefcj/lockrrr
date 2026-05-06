@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 void main() => runApp(const DeliveryBoxApp());
@@ -684,23 +685,35 @@ class _LockScreenState extends State<LockScreen> {
   bool locked = true;
   Timer? relockTimer;
 
+  Future<void> sendUnlockRequest() async {
+    final url = Uri.parse("http://lockerrr.site:3000/API/unlock");
+
+    try {
+        await http.post(url);
+        } catch (e) {
+        print("Failed to send unlock request: $e");
+      }
+  }
+
   void toggleLock() {
     if (locked) {
       setState(() {
-        locked = false;
-      });
+      locked = false;
+    });
 
-      widget.onUnlocked();
+    sendUnlockRequest();
 
-      relockTimer?.cancel();
+    widget.onUnlocked();
 
-      relockTimer = Timer(const Duration(seconds: 10), () {
-        if (mounted) {
-          setState(() {
-            locked = true;
-          });
-        }
-      });
+    relockTimer?.cancel();
+
+    relockTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted) {
+        setState(() {
+          locked = true;
+        });
+      }
+    });
     }
   }
 
